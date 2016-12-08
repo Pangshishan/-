@@ -41,30 +41,38 @@
 //    }];
     
 #pragma mark - 4.线程锁 (模拟买票)
-    UIButton *btn = [UIButton createButtonWithTitle:@"开始卖票" superView:self.view];
-    [[btn rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x) {
-        [self.thread01 start];
-        [self.thread02 start];
-        [self.thread03 start];
-    }];
-    void (^block)(void) = ^{
-        // 1.不推荐用的锁, ()里面放的是锁, NSObject类型就是, 必须是同一个对象, 代表同一把锁
-        @synchronized (self) {
-            while (1) {
-                if (self.ticketsCount > 0) {
-                    self.ticketsCount--;
-                    NSLog(@"%@ - 卖了一张票, 剩余:%ld", [NSThread currentThread].name, _ticketsCount);
-                } else {
-                    NSLog(@"卖光了");
-                    break;
-                }
-            }
-        }
-    };
-    self.ticketsCount = 100;
-    self.thread01 = [[NSThread alloc] initWithBlock:block];
-    self.thread02 = [[NSThread alloc] initWithBlock:block];
-    self.thread03 = [[NSThread alloc] initWithBlock:block];
+//    UIButton *btn = [UIButton createButtonWithTitle:@"开始卖票" superView:self.view];
+//    [[btn rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x) {
+//        [self.thread01 start];
+//        [self.thread02 start];
+//        [self.thread03 start];
+//    }];
+//    void (^block)(void) = ^{
+//        while (1) {
+//            // 1.互斥锁(线程同步) - 不推荐用的锁, ()里面放的是锁, NSObject类型就是, 必须是同一个对象, 代表同一把锁
+//            // 2.注意, while内部是在卖票, 因此应该将锁加到while内部; 如果将锁加到while外部, 先进去的线程会一直霸占卖票过程, 等卖完才会开放给其他线程进去
+//            @synchronized (self) {
+//                if (self.ticketsCount > 0) {
+//                    self.ticketsCount--;
+//                    NSLog(@"%@ - 卖了一张票, 剩余:%ld", [NSThread currentThread].name, _ticketsCount);
+//                } else {
+//                    NSLog(@"卖光了");
+//                    break;
+//                }
+//            }
+//        }
+//    };
+//    self.ticketsCount = 100;
+//    self.thread01 = [[NSThread alloc] initWithBlock:block];
+//    self.thread02 = [[NSThread alloc] initWithBlock:block];
+//    self.thread03 = [[NSThread alloc] initWithBlock:block];
+//    self.thread01.name = @"01";
+//    self.thread02.name = @"02";
+//    self.thread03.name = @"03";
+#pragma mark - 线程间通信(nonatomic, atomic)
+    // 1. atomic : 线程安全, 需要消耗大量资源
+    // 2. nonatomic : 非线程安全, 存放内存小的移动设备, 大部分使用这个
+    
 }
 
 
