@@ -72,6 +72,7 @@
 #pragma mark - 线程间通信(nonatomic, atomic)
     // 1. atomic : 线程安全, 需要消耗大量资源
     // 2. nonatomic : 非线程安全, 存放内存小的移动设备, 大部分使用这个
+//    CFTimeInterval begin = CFAbsoluteTimeGetCurrent(); // 获取线程的绝对时间, 用于计算时间差
     
 }
 
