@@ -73,6 +73,64 @@
     // 1. atomic : 线程安全, 需要消耗大量资源
     // 2. nonatomic : 非线程安全, 存放内存小的移动设备, 大部分使用这个
 //    CFTimeInterval begin = CFAbsoluteTimeGetCurrent(); // 获取线程的绝对时间, 用于计算时间差
+    // 回到主线程的方法
+//    self performSelectorOnMainThread:<#(nonnull SEL)#> withObject:<#(nullable id)#> waitUntilDone:<#(BOOL)#>
+    // 跟runloop有关，可以让程序不那么卡
+//    self performSelectorOnMainThread:<#(nonnull SEL)#> withObject:<#(nullable id)#> waitUntilDone:<#(BOOL)#> modes:<#(nullable NSArray<NSString *> *)#>
+    
+    // 让某个线程调用某个方法， 最后一个方法是等不等这个方法调用完，也就是租不阻塞当前这个线程
+//    self performSelector:<#(nonnull SEL)#> onThread:<#(nonnull NSThread *)#> withObject:<#(nullable id)#> waitUntilDone:<#(BOOL)#>
+#pragma mark - GCD (Grand Central Dispatch) (牛逼的中枢调度器)
+    /*
+     GCD两个核心概念：
+     1.任务：执行什么操作（block）
+     2.队列：用来存放任务
+     
+     GCD的使用就2个步骤
+     1.定制任务
+     2.将任务加到队列中（自动将队列中的任务取出，放到线程中执行；任务遵循FIFO先进先出原则执行）
+     
+     GCD在libdispatch里面，默认导入这个库
+     */
+    
+    /*
+     同步、异步只决定：具不具备开启线程的能力
+     1、同步：只能在当前线程中执行任务，不具备开启新线程的能力
+     dispatch_sync(<#dispatch_queue_t  _Nonnull queue#>, <#^(void)block#>)
+     2、异步：可以在新的线程中执行任务，具备开启新线程的能力
+     dispatch_async(<#dispatch_queue_t  _Nonnull queue#>, <#^(void)block#>)
+     
+     并行、串行主要硬性：任务的执行方式
+     1、并行队列（Concurrent Dispatch Queue）
+     （1）允许多个任务并行（同时）执行；（自动开启多个线程执行任务）
+     （2）并发功能只有在异步（dispatch_async）函数下才有效
+     2、串行队列（Serial Dispatch Queue）
+     （1）让任务一个接着一个执行
+     */
+    
+    // 1、创建队列
+    // label：队列标签
+    // attr：队列类型，串行还是并行
+    dispatch_queue_t queue = dispatch_queue_create("com.pangshishan.haha", DISPATCH_QUEUE_CONCURRENT);
+    // 2、将任务添加到队列
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"1 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"2 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"3 --- %@", [NSThread currentThread]);
+        }
+    });
+    
+    
+
 }
 
 
