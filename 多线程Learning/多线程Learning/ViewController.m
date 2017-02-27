@@ -94,13 +94,13 @@
      */
     
     /*
-     同步、异步只决定：具不具备开启线程的能力
+     同步、异步只决定：具不具备开启线程的能力 ************************************
      1、同步：只能在当前线程中执行任务，不具备开启新线程的能力
      dispatch_sync(<#dispatch_queue_t  _Nonnull queue#>, <#^(void)block#>)
      2、异步：可以在新的线程中执行任务，具备开启新线程的能力
      dispatch_async(<#dispatch_queue_t  _Nonnull queue#>, <#^(void)block#>)
      
-     并行、串行主要硬性：任务的执行方式
+     并行、串行主要硬性：任务的执行方式 *****************************************
      1、并行队列（Concurrent Dispatch Queue）
      （1）允许多个任务并行（同时）执行；（自动开启多个线程执行任务）
      （2）并发功能只有在异步（dispatch_async）函数下才有效
@@ -108,11 +108,72 @@
      （1）让任务一个接着一个执行
      */
     
-    // 1、创建队列
+    // 同步异步 + 并行串行 组合
+//    [self gcd_asyncConcurrent];
+//    [self gcd_syncSerial];
+//    [self gcd_syncMain];
+    
+#pragma mark - GCD - 线程间通讯
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        // 异步 并发执行任务，开启了一个新线程
+        NSLog(@"新线程 - %@", [NSThread currentThread]);
+        
+        // 回到主线程， async 和 sync都行
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"回到了主线程 - %@", [NSThread currentThread]);
+        });
+        
+        // async：走完这句再回到主线程；sync：先回到主线程做完事情再走这句
+        NSLog(@"走这一步 - %@", [NSThread currentThread]);
+    });
+    
+}
+// gcd - 0. 同步 + 主队列：
+- (void)gcd_syncMain
+{
+    // 特殊的串行队列，主队列；主队列里的任务都在 主线程 里执行（不管是同步还是异步）
+    dispatch_queue_t queue = dispatch_get_main_queue();
+    
+    NSLog(@"-- begin");
+    // 2、将任务添加到队列 - 同步
+    // 这里会出现问题，蹦了
+#pragma mark - BUG
+    /*
+     1.同步不会开启线程（并且主队列中的任务都在主线程中进行）
+     2.当前线程（主线程）正在执行任务，要执行完才能去执行下一个任务，而当前这个任务又要马上要在当前线程执行，于是当前线程就懵逼了：“你想要我怎样”（当前线程需要马上执行两个任务）。还可以这样理解：大任务执行完才能开启小任务，然而小任务不执行完 大任务没法完成，就堵到这了
+     */
+    // 用sync函数往当前串行队列中添加任务，会卡住当前串行队列
+    dispatch_sync(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"1 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_sync(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"2 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_sync(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"3 --- %@", [NSThread currentThread]);
+        }
+    });
+    NSLog(@"-- end");
+}
+// gcd - 1. 异步 + 并发 ：可同时开启多条线程
+- (void)gcd_asyncConcurrent
+{
+    // 1、创建并行队列
     // label：队列标签
     // attr：队列类型，串行还是并行
-    dispatch_queue_t queue = dispatch_queue_create("com.pangshishan.haha", DISPATCH_QUEUE_CONCURRENT);
-    // 2、将任务添加到队列
+//    dispatch_queue_t queue = dispatch_queue_create("com.pangshishan.haha", DISPATCH_QUEUE_CONCURRENT);
+    
+    // 获取全局的并发队列，全局队列就是一个并发队列，第一个参数是优先级
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    
+    
+    // 2、将任务添加到队列 - 异步
     dispatch_async(queue, ^{
         for (int i = 0; i < 10; i++) {
             NSLog(@"1 --- %@", [NSThread currentThread]);
@@ -129,10 +190,34 @@
         }
     });
     
-    
-
 }
-
+// gcd - 2. 同步 + 并行；其他情况自行模拟
+- (void)gcd_syncSerial
+{
+    // 1、创建串行队列，DISPATCH_QUEUE_SERIAL == NULL
+//    dispatch_queue_t queue = dispatch_queue_create("com.pangshishan.haha", DISPATCH_QUEUE_SERIAL);
+    
+    // 特殊的串行队列，主队列；主队列里的任务都在 主线程 里执行（不管是同步还是异步）
+    dispatch_queue_t queue = dispatch_get_main_queue();
+    
+    
+    // 2、将任务添加到队列 - 异步
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"1 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"2 --- %@", [NSThread currentThread]);
+        }
+    });
+    dispatch_async(queue, ^{
+        for (int i = 0; i < 10; i++) {
+            NSLog(@"3 --- %@", [NSThread currentThread]);
+        }
+    });
+}
 
 - (void)createNSThread
 {
